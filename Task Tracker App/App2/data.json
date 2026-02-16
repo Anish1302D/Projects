@@ -1,0 +1,78 @@
+{
+  "users": {
+    "Anish": {
+      "password": "Anish",
+      "projects": {
+        "3d515c27-6415-4400-8e88-45ec9b120470": {
+          "id": "3d515c27-6415-4400-8e88-45ec9b120470",
+          "name": "AMD Hackathon",
+          "tasks": [
+            {
+              "id": "cbd374a2-032a-4e88-ad1c-8f152174898a",
+              "title": "Creating a Web Scrapper",
+              "desc": "To Create a web scraper website",
+              "priority": "High",
+              "due_date": "2026-02-05",
+              "status": "pending"
+            },
+            {
+              "id": "74a2973c-9fc7-4ed0-9d0a-a10a1b7ab6f5",
+              "title": "Basic Prototype",
+              "desc": "To create a basic prototype of the project",
+              "priority": "High",
+              "due_date": "2026-02-12",
+              "status": "pending"
+            },
+            {
+              "id": "46bdddbf-9658-472c-a4c9-4eb0094b4364",
+              "title": "Polishing the Prototype",
+              "desc": "To enhance and update the basic prototype of the app",
+              "priority": "Medium",
+              "due_date": "2026-02-19",
+              "status": "pending"
+            },
+            {
+              "id": "e0ebabfd-5a6b-4805-8c2a-40f97eff24c5",
+              "title": "Demo Video and Presentation",
+              "desc": "To create Video of the prototype and presentation",
+              "priority": "Low",
+              "due_date": "2026-02-22",
+              "status": "pending"
+            },
+            {
+              "id": "1d4354b9-50de-4349-97bb-edf3dd987f96",
+              "title": "Submission",
+              "desc": "To submit the project",
+              "priority": "Low",
+              "due_date": "2026-02-26",
+              "status": "pending"
+            }
+          ],
+          "status": "not completed"
+        }
+      },
+      "project_count": 1
+    },
+    "Mads": {
+      "password": "Mads",
+      "projects": {
+        "6f5845c3-bce4-4add-a918-1155134939bd": {
+          "id": "6f5845c3-bce4-4add-a918-1155134939bd",
+          "name": "Project 1",
+          "tasks": [
+            {
+              "id": "a86cd3d2-9e00-4e95-ad08-aaf2cd506606",
+              "title": "Task 1",
+              "desc": "Task 1 Description",
+              "priority": "High",
+              "due_date": "2025-12-02",
+              "status": "pending"
+            }
+          ],
+          "status": "not completed"
+        }
+      },
+      "project_count": 1
+    }
+  }
+}
