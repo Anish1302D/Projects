@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Solar System | Gesture Controlled</title>
+    
+    <!-- Google Fonts for Futuristic Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Rajdhani', sans-serif;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Glassmorphism UI Base */
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #00ffff;
+            margin: 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaddff;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 20px;
+            border: 1px solid rgba(0,255,255,0.3);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 2px;
+            background-color: #00ffff;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #00ffff;
+        }
+        input:checked + .slider { background-color: rgba(0, 255, 255, 0.2); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 130px;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #00ffff;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 8px #00ffff;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: rgba(0, 255, 255, 0.3);
+        }
+
+        /* Select / Buttons */
+        select, button {
+            font-family: 'Rajdhani', sans-serif;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        select option { background: #0a0f1e; color: #00ffff; }
+        button:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 10px rgba(0, 255, 255, 0.4); }
+
+        #planet-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .planet-btn {
+            font-size: 11px;
+            flex: 1 1 calc(33% - 6px);
+            text-align: center;
+        }
+
+        #fullscreen-btn {
+            width: 100%;
+            margin-top: 5px;
+            background: rgba(0, 255, 255, 0.15);
+            font-size: 14px;
+        }
+        #fullscreen-btn:hover { background: #00ffff; color: #000; }
+
+        /* Information Panel */
+        #info-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 320px;
+            padding: 25px;
+            border-left: 4px solid #ff4422;
+            box-shadow: 0 0 30px rgba(255, 68, 34, 0.15);
+            transform: translateX(150%);
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            pointer-events: auto;
+        }
+        #info-panel.show { transform: translateX(0); }
+
+        #info-title {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0 0 15px 0;
+            color: #ff4422;
+            font-size: 26px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 68, 34, 0.5);
+        }
+        .info-stat {
+            font-size: 15px;
+            color: #aaddff;
+            margin: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+        .info-stat span { color: #fff; font-weight: bold; float: right; }
+        #info-facts {
+            margin-top: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #cccccc;
+            font-style: italic;
+        }
+        #close-info {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            padding: 0;
+            box-shadow: none;
+        }
+        #close-info:hover { color: #ff4422; background: none; text-shadow: 0 0 8px #ff4422; }
+
+        /* Planet Labels (Educational Mode) */
+        .planet-label {
+            position: absolute;
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 4px #000, 0 0 8px #00ffff;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 5;
+            transition: opacity 0.3s;
+        }
+
+        /* Status & Debug */
+        #status-message {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #00ffff;
+            font-size: 13px;
+            font-family: monospace;
+            padding: 8px 12px;
+            z-index: 10;
+        }
+        #input_video {
+            position: absolute;
+            bottom: 70px;
+            left: 20px;
+            width: 160px;
+            height: 120px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            transform: scaleX(-1);
+            object-fit: cover;
+            opacity: 0.6;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+
+        /* Hand Cursor */
+        #cursor {
+            position: fixed;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.4);
+            pointer-events: none;
+            z-index: 9999;
+            border: 2px solid #00ffff;
+            display: none;
+            transform: translate(-50%, -50%);
+            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Guide */
+        #gesture-guide {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            padding: 15px;
+            font-size: 12px;
+            color: #aaddff;
+        }
+        #gesture-guide ul { padding-left: 20px; margin: 10px 0 0 0; }
+        #gesture-guide li { margin-bottom: 5px; }
+        #gesture-guide span { color: #00ffff; font-weight: bold; }
+    </style>
+
+    <!-- MediaPipe Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Hand Cursor -->
+    <div id="cursor"></div>
+
+    <!-- UI Panel -->
+    <div id="ui-panel" class="glass-panel">
+        <h1>Solar System</h1>
+        
+        <div class="control-group">
+            <label>Edu Mode</label>
+            <label class="switch">
+                <input type="checkbox" id="edu-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="control-group">
+            <label>Particles</label>
+            <input type="range" id="particle-slider" min="0.1" max="3" step="0.1" value="1">
+        </div>
+
+        <div class="control-group">
+            <label>Theme</label>
+            <select id="theme-select">
+                <option value="default">Cosmic Deep</option>
+                <option value="neon">Neon Synthwave</option>
+                <option value="light">Starlight</option>
+            </select>
+        </div>
+
+        <div id="planet-buttons">
+            <!-- Buttons dynamically generated -->
+        </div>
+
+        <button id="fullscreen-btn">ENTER FULLSCREEN</button>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel" class="glass-panel">
+        <button id="close-info">✖</button>
+        <h2 id="info-title">Planet</h2>
+        <div class="info-stat">Radius <span id="info-size"></span></div>
+        <div class="info-stat">Distance <span id="info-dist"></span></div>
+        <div class="info-stat">Orbit Speed <span id="info-speed"></span></div>
+        <div id="info-facts"></div>
+    </div>
+
+    <!-- Gesture Guide -->
+    <div id="gesture-guide" class="glass-panel">
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 14px; color: #fff; border-bottom: 1px solid rgba(0,255,255,0.2); padding-bottom: 5px;">GESTURE CONTROLS</div>
+        <ul>
+            <li><span>Open Hand:</span> Zoom Out</li>
+            <li><span>Closed Fist:</span> Zoom In</li>
+            <li><span>Pinch:</span> Select Planet / Click</li>
+            <li><span>Hand Move:</span> Rotate Galaxy</li>
+            <li><span>Two Hands Dist:</span> Particle Field</li>
+        </ul>
+    </div>
+
+    <!-- Webcam Preview & Status -->
+    <video id="input_video" autoplay playsinline></video>
+    <div id="status-message" class="glass-panel">Initializing Engine...</div>
+
+    <!-- Application Logic -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- 1. GLOBALS & STATE ---
+        let scene, camera, renderer, composer, bloomPass, controls;
+        let sceneGroup, ambientLight, sunLight;
+        let stars;
+        const planetMeshes = [];
+        const meshToPlanet = new Map();
+        const labels = [];
+        let explosions = [];
+        
+        let targetCameraDistance = 100;
+        let isAutoCamera = true;
+        let selectedPlanet = null;
+        let targetSceneRotationX = 0;
+        let targetSceneRotationY = 0;
+        let targetParticleExpansion = 1.0;
+        
+        let lastHandTime = Date.now();
+        let pinchDebounce = 0;
+        let currentGesture = 'NEUTRAL';
+
+        // --- 2. PLANET DATA ---
+        const planetsData = [
+            { name: 'Mercury', radius: 0.8, distance: 16, speed: 0.04, color: 0x999999, info: 'The smallest planet in our solar system and nearest to the Sun.' },
+            { name: 'Venus', radius: 1.5, distance: 24, speed: 0.015, color: 0xe3bb76, info: 'Spinning in the opposite direction to most planets, it is the hottest planet.' },
+            { name: 'Earth', radius: 1.6, distance: 34, speed: 0.01, color: 0x2288ff, hasAtmos: true, info: 'Our home planet is the only place we know of so far thats inhabited by living things.' },
+            { name: 'Mars', radius: 1.1, distance: 44, speed: 0.008, color: 0xff4422, info: 'The Red Planet is a dusty, cold, desert world with a very thin atmosphere.' },
+            { name: 'Jupiter', radius: 4.0, distance: 60, speed: 0.002, color: 0xd8ca9d, info: 'Twice as massive as all the other planets combined, the giant of our solar system.' },
+            { name: 'Saturn', radius: 3.2, distance: 78, speed: 0.0009, color: 0xead6b8, hasRings: true, info: 'Adorned with a dazzling, complex system of icy rings, it is unique in our solar system.' },
+            { name: 'Uranus', radius: 2.2, distance: 96, speed: 0.0004, color: 0x4b70dd, info: 'The seventh planet from the Sun rotates at a nearly 90-degree angle from the plane of its orbit.' },
+            { name: 'Neptune', radius: 2.1, distance: 112, speed: 0.0001, color: 0x274687, info: 'Dark, cold, and whipped by supersonic winds, it is the last of the hydrogen and helium gas giants.' }
+        ];
+
+        // --- 3. INIT THREE.JS ---
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.002);
+            
+            sceneGroup = new THREE.Group();
+            scene.add(sceneGroup);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 60, 160);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 500;
+            controls.addEventListener('start', () => { 
+                isAutoCamera = false; 
+                if(selectedPlanet) clearSelection(); 
+            });
+
+            // Lighting
+            ambientLight = new THREE.AmbientLight(0x222233, 1.0);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.PointLight(0xffeedd, 500, 1000);
+            sceneGroup.add(sunLight);
+
+            // Postprocessing
+            const renderScene = new RenderPass(scene, camera);
+            bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0.15;
+            bloomPass.strength = 1.6;
+            bloomPass.radius = 0.6;
+
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            createSolarSystem();
+            createStarfield();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- 4. BUILD SCENE OBJECTS ---
+        function createSolarSystem() {
+            // Sun Core
+            const sunGeom = new THREE.SphereGeometry(7, 64, 64);
+            const sunMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffaa00, 
+                emissive: 0xff5500,
+                emissiveIntensity: 2.5,
+                roughness: 0.2
+            });
+            const sun = new THREE.Mesh(sunGeom, sunMat);
+            sceneGroup.add(sun);
+
+            // Sun Glow
+            const glowGeom = new THREE.SphereGeometry(8.5, 32, 32);
+            const glowMat = new THREE.MeshBasicMaterial({
+                color: 0xff8800,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            });
+            const sunGlow = new THREE.Mesh(glowGeom, glowMat);
+            sun.add(sunGlow);
+
+            // Planets
+            planetsData.forEach((p) => {
+                p.angle = Math.random() * Math.PI * 2;
+                
+                // Planet Mesh
+                const geom = new THREE.SphereGeometry(p.radius, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({ 
+                    color: p.color,
+                    roughness: 0.6,
+                    metalness: 0.1
+                });
+                const mesh = new THREE.Mesh(geom, mat);
+                sceneGroup.add(mesh);
+                
+                p.mesh = mesh;
+                planetMeshes.push(mesh);
+                meshToPlanet.set(mesh, p);
+
+                // Atmosphere (Earth)
+                if (p.hasAtmos) {
+                    const atGeom = new THREE.SphereGeometry(p.radius * 1.15, 32, 32);
+                    const atMat = new THREE.MeshBasicMaterial({
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.25,
+                        blending: THREE.AdditiveBlending
+                    });
+                    mesh.add(new THREE.Mesh(atGeom, atMat));
+                }
+
+                // Rings (Saturn)
+                if (p.hasRings) {
+                    const ringGeom = new THREE.BufferGeometry();
+                    const ringCount = 6000;
+                    const rPos = new Float32Array(ringCount * 3);
+                    const rCol = new Float32Array(ringCount * 3);
+                    const colorObj = new THREE.Color(p.color);
+                    
+                    for(let i=0; i<ringCount; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const r = p.radius * 1.4 + Math.random() * p.radius * 1.5;
+                        rPos[i*3] = Math.cos(angle) * r;
+                        rPos[i*3+1] = (Math.random() - 0.5) * 0.1;
+                        rPos[i*3+2] = Math.sin(angle) * r;
+                        
+                        colorObj.setHex(p.color);
+                        colorObj.offsetHSL(0, 0, (Math.random()-0.5)*0.3);
+                        rCol[i*3] = colorObj.r;
+                        rCol[i*3+1] = colorObj.g;
+                        rCol[i*3+2] = colorObj.b;
+                    }
+                    ringGeom.setAttribute('position', new THREE.BufferAttribute(rPos, 3));
+                    ringGeom.setAttribute('color', new THREE.BufferAttribute(rCol, 3));
+                    
+                    const ringMat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.8 });
+                    const ring = new THREE.Points(ringGeom, ringMat);
+                    ring.rotation.x = Math.PI / 2.2;
+                    mesh.add(ring);
+                    p.ring = ring;
+                }
+
+                // Orbit Trail Particles
+                const oPts = [];
+                const segments = 250;
+                for(let i=0; i<=segments; i++) {
+                    const theta = (i / segments) * Math.PI * 2;
+                    oPts.push(new THREE.Vector3(Math.cos(theta) * p.distance, 0, Math.sin(theta) * p.distance));
+                }
+                const oGeom = new THREE.BufferGeometry().setFromPoints(oPts);
+                const oMat = new THREE.PointsMaterial({ size: 1.2, sizeAttenuation: false, color: p.color, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
+                const orbit = new THREE.Points(oGeom, oMat);
+                orbit.visible = false;
+                sceneGroup.add(orbit);
+                p.orbit = orbit;
+
+                // HTML Label
+                const div = document.createElement('div');
+                div.className = 'planet-label';
+                div.innerText = p.name;
+                document.body.appendChild(div);
+                labels.push({ div, mesh });
+            });
+        }
+
+        function createStarfield() {
+            const starGeom = new THREE.BufferGeometry();
+            const starCount = 12000;
+            const posArray = new Float32Array(starCount * 3);
+            const colArray = new Float32Array(starCount * 3);
+            const colorObj = new THREE.Color();
+
+            for(let i=0; i<starCount*3; i+=3) {
+                posArray[i] = (Math.random() - 0.5) * 1500;
+                posArray[i+1] = (Math.random() - 0.5) * 1500;
+                posArray[i+2] = (Math.random() - 0.5) * 1500;
+
+                colorObj.setHSL(Math.random(), 0.5, Math.random() * 0.8 + 0.2);
+                colArray[i] = colorObj.r;
+                colArray[i+1] = colorObj.g;
+                colArray[i+2] = colorObj.b;
+            }
+            starGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            starGeom.setAttribute('color', new THREE.BufferAttribute(colArray, 3));
+            
+            const starMat = new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.8 });
+            stars = new THREE.Points(starGeom, starMat);
+            scene.add(stars);
+        }
+
+        function spawnExplosion(position, color) {
+            const geom = new THREE.BufferGeometry();
+            const count = 400;
+            const pos = new Float32Array(count * 3);
+            const vels = [];
+            for(let i=0; i<count; i++) {
+                pos[i*3] = position.x;
+                pos[i*3+1] = position.y;
+                pos[i*3+2] = position.z;
+                
+                const speed = Math.random() * 0.8 + 0.2;
+                vels.push(new THREE.Vector3((Math.random()-0.5)*speed, (Math.random()-0.5)*speed, (Math.random()-0.5)*speed));
+            }
+            geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({ size: 1.0, color: color, transparent: true, opacity: 1, blending: THREE.AdditiveBlending });
+            const points = new THREE.Points(geom, mat);
+            sceneGroup.add(points);
+            explosions.push({ points, vels, age: 0 });
+        }
+
+        // --- 5. INTERACTION LOGIC ---
+        function selectPlanetByData(p) {
+            selectedPlanet = p;
+            isAutoCamera = true;
+            lastHandTime = Date.now(); // reset idle timer
+            
+            document.getElementById('info-title').innerText = p.name;
+            document.getElementById('info-size').innerText = p.radius.toFixed(1) + 'x Earth';
+            document.getElementById('info-dist').innerText = p.distance + ' Mkm';
+            document.getElementById('info-speed').innerText = p.speed + ' rad/f';
+            document.getElementById('info-facts').innerText = p.info;
+            document.getElementById('info-panel').classList.add('show');
+            
+            // Highlight
+            planetsData.forEach(pl => {
+                if(pl.orbit) {
+                    pl.orbit.material.opacity = (pl === p) ? 0.9 : 0.1;
+                    pl.orbit.material.color.setHex((pl === p) ? 0xffffff : pl.color);
+                    pl.orbit.visible = (pl === p) || document.getElementById('edu-toggle').checked;
+                }
+            });
+
+            // Explosion effect using planet's world pos
+            const wPos = p.mesh.position.clone().applyMatrix4(sceneGroup.matrixWorld);
+            spawnExplosion(p.mesh.position, p.color); // spawn in local space
+        }
+
+        function clearSelection() {
+            selectedPlanet = null;
+            document.getElementById('info-panel').classList.remove('show');
+            const isEdu = document.getElementById('edu-toggle').checked;
+            
+            planetsData.forEach(p => {
+                if (p.orbit) {
+                    p.orbit.material.opacity = 0.2;
+                    p.orbit.material.color.setHex(p.color);
+                    p.orbit.visible = isEdu;
+                }
+            });
+        }
+
+        function buildUI() {
+            const btnContainer = document.getElementById('planet-buttons');
+            planetsData.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'planet-btn';
+                btn.innerText = p.name;
+                btn.onclick = () => selectPlanetByData(p);
+                btnContainer.appendChild(btn);
+            });
+
+            document.getElementById('close-info').onclick = clearSelection;
+
+            document.getElementById('fullscreen-btn').onclick = () => {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                else if (document.exitFullscreen) document.exitFullscreen();
+            };
+
+            document.getElementById('theme-select').onchange = (e) => {
+                const theme = e.target.value;
+                if (theme === 'neon') {
+                    bloomPass.strength = 2.8;
+                    ambientLight.color.setHex(0x551166);
+                    document.body.style.filter = 'hue-rotate(60deg) saturate(1.8)';
+                } else if (theme === 'light') {
+                    bloomPass.strength = 0.8;
+                    ambientLight.color.setHex(0x555566);
+                    document.body.style.filter = 'none';
+                } else {
+                    bloomPass.strength = 1.6;
+                    ambientLight.color.setHex(0x222233);
+                    document.body.style.filter = 'none';
+                }
+            };
+            
+            document.getElementById('particle-slider').oninput = (e) => {
+                targetParticleExpansion = parseFloat(e.target.value);
+            };
+        }
+
+        // --- 6. HAND TRACKING (MediaPipe) ---
+        const cursor = document.getElementById('cursor');
+        const raycaster = new THREE.Raycaster();
+        
+        function initHandTracking() {
+            const videoElement = document.getElementById('input_video');
+            const statusEl = document.getElementById('status-message');
+            statusEl.innerText = "Loading MediaPipe Models...";
+
+            const hands = new Hands({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            }});
+
+            hands.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.6,
+                minTrackingConfidence: 0.6
+            });
+
+            hands.onResults((results) => {
+                if (statusEl.innerText.includes('Loading')) statusEl.innerText = 'Hand Tracking Active';
+                processHandResults(results);
+            });
+
+            const cameraUtils = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({image: videoElement});
+                },
+                width: 320,
+                height: 240
+            });
+            cameraUtils.start().catch(err => {
+                statusEl.innerText = "Webcam error: " + err.message;
+                statusEl.style.color = "#ff4422";
+            });
+        }
+
+        const dist = (p1, p2) => Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2) + Math.pow(p1.z-p2.z, 2));
+
+        function getHandState(landmarks) {
+            const dWristToTip = (tip, pip) => dist(landmarks[0], landmarks[tip]) > dist(landmarks[0], landmarks[pip]);
+            
+            const indexExt = dWristToTip(8, 6);
+            const middleExt = dWristToTip(12, 10);
+            const ringExt = dWristToTip(16, 14);
+            const pinkyExt = dWristToTip(20, 18);
+            const thumbExt = dist(landmarks[0], landmarks[4]) > dist(landmarks[0], landmarks[3]);
+            
+            const extendedCount = [indexExt, middleExt, ringExt, pinkyExt, thumbExt].filter(x=>x).length;
+            const pinchDist = dist(landmarks[4], landmarks[8]);
+            
+            if (pinchDist < 0.05) return 'PINCH';
+            if (extendedCount >= 4) return 'OPEN';
+            if (extendedCount === 0) return 'CLOSED';
+            return 'NEUTRAL';
+        }
+
+        function processHandResults(results) {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                lastHandTime = Date.now();
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Cursor position (mirror X)
+                const indexTip = landmarks[8];
+                const screenX = (1 - indexTip.x) * window.innerWidth;
+                const screenY = indexTip.y * window.innerHeight;
+                
+                cursor.style.display = 'block';
+                cursor.style.left = screenX + 'px';
+                cursor.style.top = screenY + 'px';
+                
+                currentGesture = getHandState(landmarks);
+                
+                // Visual feedback
+                if (currentGesture === 'PINCH') {
+                    cursor.style.background = 'rgba(255,68,34,0.8)';
+                    cursor.style.borderColor = '#ff4422';
+                    cursor.style.transform = 'translate(-50%, -50%) scale(0.7)';
+                    
+                    // Raycast Selection
+                    if (Date.now() - pinchDebounce > 800) {
+                        const ndcX = (screenX / window.innerWidth) * 2 - 1;
+                        const ndcY = -(screenY / window.innerHeight) * 2 + 1;
+                        raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+                        
+                        const intersects = raycaster.intersectObjects(planetMeshes, false);
+                        if (intersects.length > 0) {
+                            const p = meshToPlanet.get(intersects[0].object);
+                            if(p) selectPlanetByData(p);
+                            pinchDebounce = Date.now();
+                        } else {
+                            if (selectedPlanet) clearSelection();
+                            pinchDebounce = Date.now();
+                        }
+                    }
+                } else {
+                    cursor.style.background = 'rgba(0,255,255,0.4)';
+                    cursor.style.borderColor = '#00ffff';
+                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                }
+                
+                // Zoom
+                if (currentGesture === 'OPEN') {
+                    doZoom(2.0);
+                } else if (currentGesture === 'CLOSED') {
+                    doZoom(-2.0);
+                }
+
+                // Scene Rotation
+                if (currentGesture === 'NEUTRAL' || currentGesture === 'OPEN') {
+                    targetSceneRotationY = (1 - indexTip.x - 0.5) * Math.PI;
+                    targetSceneRotationX = (indexTip.y - 0.5) * Math.PI * 0.5;
+                }
+
+                // Two Hands -> Particle Expansion
+                if (results.multiHandLandmarks.length === 2) {
+                    const h1 = results.multiHandLandmarks[0][0];
+                    const h2 = results.multiHandLandmarks[1][0];
+                    const d = Math.sqrt(Math.pow(h1.x-h2.x, 2) + Math.pow(h1.y-h2.y, 2));
+                    targetParticleExpansion = Math.max(0.1, Math.min(d * 4.0, 3.0));
+                    document.getElementById('particle-slider').value = targetParticleExpansion;
+                }
+
+            } else {
+                cursor.style.display = 'none';
+                currentGesture = 'NONE';
+                targetSceneRotationY = 0;
+                targetSceneRotationX = 0;
+            }
+        }
+
+        const zoomDir = new THREE.Vector3();
+        function doZoom(delta) {
+            zoomDir.subVectors(camera.position, controls.target).normalize();
+            const currentDist = camera.position.distanceTo(controls.target);
+            const newDist = Math.max(20, Math.min(currentDist + delta, 400));
+            camera.position.copy(controls.target).add(zoomDir.multiplyScalar(newDist));
+        }
+
+        // --- 7. RENDER LOOP ---
+        const tempPos = new THREE.Vector3();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const isEdu = document.getElementById('edu-toggle').checked;
+            const timeScale = isEdu ? 0.3 : 1.0;
+
+            // Update Planets
+            planetsData.forEach(p => {
+                p.angle += p.speed * timeScale;
+                p.mesh.position.x = Math.cos(p.angle) * p.distance;
+                p.mesh.position.z = Math.sin(p.angle) * p.distance;
+                p.mesh.rotation.y += 0.02 * timeScale;
+                
+                if (p.ring) p.ring.rotation.z -= 0.005 * timeScale;
+                if (p.orbit) p.orbit.visible = isEdu || selectedPlanet === p;
+            });
+
+            // Smooth Scene Rotation via Hand
+            sceneGroup.rotation.y += (targetSceneRotationY - sceneGroup.rotation.y) * 0.05;
+            sceneGroup.rotation.x += (targetSceneRotationX - sceneGroup.rotation.x) * 0.05;
+
+            // Particle Expansion
+            stars.scale.lerp(new THREE.Vector3(targetParticleExpansion, targetParticleExpansion, targetParticleExpansion), 0.05);
+
+            // Explosions
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                const exp = explosions[i];
+                exp.age += 0.016;
+                const posAttr = exp.points.geometry.attributes.position;
+                const posArray = posAttr.array;
+                for (let j = 0; j < exp.vels.length; j++) {
+                    posArray[j*3] += exp.vels[j].x;
+                    posArray[j*3+1] += exp.vels[j].y;
+                    posArray[j*3+2] += exp.vels[j].z;
+                }
+                posAttr.needsUpdate = true;
+                exp.points.material.opacity = Math.max(0, 1.0 - (exp.age / 1.5));
+                if (exp.age >= 1.5) {
+                    sceneGroup.remove(exp.points);
+                    explosions.splice(i, 1);
+                }
+            }
+
+            // Cinematic Camera
+            if (isAutoCamera) {
+                if (selectedPlanet) {
+                    // Follow Planet
+                    tempPos.copy(selectedPlanet.mesh.position).applyMatrix4(sceneGroup.matrixWorld);
+                    const offset = new THREE.Vector3(selectedPlanet.radius * 4, selectedPlanet.radius * 2, selectedPlanet.radius * 6);
+                    const idealPos = tempPos.clone().add(offset);
+                    
+                    camera.position.lerp(idealPos, 0.04);
+                    controls.target.lerp(tempPos, 0.04);
+                } else if (Date.now() - lastHandTime > 5000) {
+                    // Idle Flythrough
+                    const t = Date.now() * 0.0001;
+                    const r = 140;
+                    const idealPos = new THREE.Vector3(Math.cos(t) * r, Math.sin(t*0.5) * 40 + 20, Math.sin(t) * r);
+                    camera.position.lerp(idealPos, 0.01);
+                    controls.target.lerp(new THREE.Vector3(0,0,0), 0.01);
+                }
+            }
+            controls.update();
+
+            // Educational Labels
+            labels.forEach(l => {
+                if (isEdu) {
+                    tempPos.copy(l.mesh.position).applyMatrix4(sceneGroup.matrixWorld).project(camera);
+                    if (tempPos.z > 1) {
+                        l.div.style.display = 'none';
+                    } else {
+                        l.div.style.display = 'block';
+                        const x = (tempPos.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (tempPos.y * -0.5 + 0.5) * window.innerHeight;
+                        l.div.style.left = '0px';
+                        l.div.style.top = '0px';
+                        l.div.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+                    }
+                } else {
+                    l.div.style.display = 'none';
+                }
+            });
+
+            composer.render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- 8. START ---
+        initThree();
+        buildUI();
+        initHandTracking();
+        animate();
+
+    </script>
+</body>
+</html>
